@@ -2,32 +2,10 @@ package com.google.challenges;
 
 import java.math.*;
 
-public class Answer {
+public class BombGeneration {
 	
-	static String[][] inputs ={
-		{"100000000000000000000000000000000000000000000000000", "3"},
-		{"1234567890","123456789"},
-		{"1", "2"},
-		{"4", "3"},
-		{"4", "7"},
-		{"7", "3"},
-		{"3", "5"},
-		{"5", "3"},
-		{"8", "3"},
-		{"5", "7"},
-		{"5", "8"},
-		{"3", "10"},
-		
-		{"3", "7"}};
-	static int test_cases = 5;
-	public static void main(String[] args){
-		int i = 1;
-		for(String[] input : inputs){
-			String ans = answer2(input[0], input[1]);
-			System.out.println(String.format("#%d: M=%s, F=%s: Answer=%s", i, input[0], input[1], ans));
-			i++;
-		}
-	}
+	
+	
 	
 	public static int size = 51*4;
 	
@@ -129,7 +107,7 @@ public class Answer {
 	// technically, BigInteger is slow
 	// so we'll have to implement our own
 	// method to subtract items
-	public static String answer(String M, String F)
+	public static String answer2(String M, String F)
 	{
 		// Flow of events
 		// start proc
@@ -191,21 +169,18 @@ public class Answer {
 	// BigInt
 	// we can also do a string operation, in case
 	// that one is better
-    public static String answer2(String M, String F) { 
+    public static String answer(String M, String F) { 
     	// Big integer is slow, we'll use a different approach
     	String retVal = "impossible";
     	
 
     	// mod, multiply to the smaller
     	// then subtract from the larger. add to the iteration
-
-    	
     	BigInteger mach = new BigInteger(M);
     	BigInteger facula = new BigInteger(F);
     	BigInteger iterations = new BigInteger("0");
-    	BigInteger larger;
-    	BigInteger smaller;
-    	BigInteger placeholder;
+    	BigInteger larger, smaller, placeholder;
+
     	if(mach.compareTo(facula) > 0){
         	larger = new BigInteger(M);
         	smaller = new BigInteger(F);
@@ -234,5 +209,12 @@ public class Answer {
     		retVal = iterations.subtract(BigInteger.ONE).toString();
         // Your code goes here.
     	return retVal;
-    } 
+    }
+    
+    
+    
+    
+    
+    
+    
 }
