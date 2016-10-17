@@ -250,7 +250,7 @@ public class GunFightRayTracer {
     		BigDecimal dyLine = destination.y.subtract(origin.y);
     		BigDecimal cross = (dxInterest.multiply(dyLine )).subtract((dyInterest.multiply(dxLine)));
     		
-    		cross = cross.setScale(-1, RoundingMode.HALF_EVEN);
+    		cross = cross.setScale(10, RoundingMode.HALF_EVEN);
     		retVal = cross.abs().compareTo(BigDecimal.ZERO) == 0;
     		
     		if(dxLine.abs().compareTo(dyLine.abs()) >= 0){
