@@ -4,75 +4,33 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
 
 
 public class GunFightRayTracer {
-	public final class Vector implements Comparable<GunFightRayTracer.Vector>{
-    	public Point origin;
-    	public Point direction;
-    	
-    	public Vector(){
-    		this.origin = null;
-    		this.direction = null;
-    	}
-    	public Vector(Point origin, Point direction){
-    		this.origin = origin;
-    		this.direction = direction;
-    	}
-    	
-    	public Vector ChangeDirection(Vector ray, Point intersection, int[] dimensions){
-        	// intersected left or right wall
-    		BigDecimal xDim = new BigDecimal(dimensions[0]);
-        	if(intersection.x.compareTo(BigDecimal.ZERO) == 0 || intersection.x.compareTo(xDim) == 0){
-        		ray.direction.x = ray.direction.x.negate();
-        		
-        	}
-        	// otherwise, intersected top or bottom wall
-        	else{
-        		ray.direction.y = ray.direction.y.negate();
-        		
-        	}
-        	
-        	ray.origin = intersection;
-        	BigDecimal origX = ray.origin.x;
-        	BigDecimal origY = ray.origin.y;
-        	BigDecimal directX = ray.direction.x;
-        	BigDecimal directY = ray.direction.y;
-        	Point orig = new Point(origX, origY);
-        	Point direction = new Point(directX, directY);
-        	return new Vector(orig, direction);
-        }
+	static Point bottomLeftCorner = new Point();
+	static Point bottomRightCorner = new Point();
+	static Point topLeftCorner = new Point();
+	static Point topRightCorner = new Point();
 
-		@Override
-		public int compareTo(Vector o) {
-			if(((direction.y.divide(direction.x,RoundingMode.HALF_UP)).subtract(o.direction.y.divide(o.direction.x,RoundingMode.HALF_UP))).compareTo(BigDecimal.ZERO) != 0)
-				return 1;
-			return this.origin.compareTo(o.origin);
-		}
-		
-		@Override
-		public boolean equals(Object o){
-			Vector x = (Vector)o;
-			return x.origin.compareTo(this.origin) == 0 && x.direction.compareTo(this.direction) == 0;
-		}
-    }
-	static GunFightRayTracer instance = new GunFightRayTracer();
-	static Point bottomLeftCorner = instance.new Point();
-	static Point bottomRightCorner = instance.new Point();
-	static Point topLeftCorner = instance.new Point();
-	static Point topRightCorner = instance.new Point();
-	static Vector ray;
 	
     public static int answer(int[] dimensions, int[] captain_position, int[] badguy_position, int distance) { 
-    	
-    	bottomLeftCorner = instance.new Point(BigDecimal.ZERO, BigDecimal.ZERO);
-    	bottomRightCorner = instance.new Point(new BigDecimal(dimensions[0]), BigDecimal.ZERO);
-    	topLeftCorner = instance.new Point(BigDecimal.ZERO, new BigDecimal(dimensions[1]));
-    	topRightCorner = instance.new Point(new BigDecimal(dimensions[0]), new BigDecimal(dimensions[1]));
-    	BigDecimal distanceBig = new BigDecimal(distance);
+    	bottomLeftCorner = new Point(0, 0);
+    	bottomRightCorner = new Point(dimensions[0], 0);
+    	topLeftCorner = new Point(0, dimensions[1]);
+    	topRightCorner = new Point(dimensions[0], dimensions[1]);
+    	// generate a vector to hit the walls
+    	// upon hitting a wall, change the sign of the vector
+    	// the slope is the rise / run, as well as the x-intercept == length of side
+    	// hit a wall using the vector signs
+    	// generate the opposite using the tangent
+    	// get the tangent to the destination, if same as current tangent, terminate
+    	// get the length traveled. check if already exceeds.
+    	// reverse the tangent value. repeat from the hit.
 
     	
     	
@@ -90,109 +48,105 @@ public class GunFightRayTracer {
 		 * 	Add total distance
 		 */
     	int i = 1;
-    	// create an array of vector paths
-    	TreeMap<GunFightRayTracer.Vector, GunFightRayTracer.Point> vectors = new TreeMap<GunFightRayTracer.Vector, GunFightRayTracer.Point>();
-    	ArrayList<BigDecimal> slopes = new ArrayList<>();
+
+    	HashMap<Double, Point> slopes = new HashMap<Double, Point>();
     	int possiblePaths = 0;
-    	Point captain = instance.new Point(new BigDecimal(captain_position[0]), new BigDecimal(captain_position[1]));
-    	Point badguy = instance.new Point(new BigDecimal(badguy_position[0]), new BigDecimal(badguy_position[1]));
+    	Point captain = new Point(captain_position[0], captain_position[1]);
+    	Point badguy = new Point(badguy_position[0], badguy_position[1]);
     	// generate all rays    	
-    	
-    	for(int x = -dimensions[0]; x <=  dimensions[0]; x++){
-    		for(int y = dimensions[1]; y<= dimensions[1]; y++){
+    	for(int x = (int)-dimensions[0]; x <= (int)dimensions[0]; x++){
+    		for(int y = (int)-dimensions[0]; y<= (int)dimensions[0]; y++){
     			
-    			BigDecimal refX = new BigDecimal(x);
-    			BigDecimal refY = new BigDecimal(y);
-    			BigDecimal slope = y == 0 ? x < 0 ? new BigDecimal(-100000) : new BigDecimal(100000) : x == 0 ? new BigDecimal(Double.MAX_VALUE) : refY.divide(refX, 10, RoundingMode.HALF_UP); //) * 100000.00)/100000.00;
-    			//System.out.println("iteration: " + i + "x = " + x + "y = " + y);
+    			//double slope = y == 0 ? x < 0 ? -100000 : 10000 :x == 0 ? Double.MAX_VALUE : Math.round(((double)y/(double)x) * 100000.00)/100000.00 ;
+    			double slope = y == 0 ? x < 0 ? -100000 : 10000 :x == 0 ? Double.MAX_VALUE : (double)y/(double)x;
+    			// get gcf
     			
-    			//BigDecimal slope = x == 0 ? BigDecimal.MAX_VALUE : (BigDecimal)y/(BigDecimal)x;
-    			if(slopes.contains(slope)){
-    				//System.out.println("Skipped");
-    				continue;
+    			//double slope = x == 0 ? Double.MAX_VALUE : (double)y/(double)x;
+    			if(x == 2 && y == 3){
+    				System.out.println("gumana");
     			}
+    			if(slopes.containsKey(slope)){
+    				// check if the point is really the same
+    				Point test = slopes.get(slope);
+    				double largerX = test.x > x? test.x:x;
+    				double smallerX =test.x > x? x: test.x;
+    				double largerY = test.y > y ? test.y : y;
+    				double smallerY = test.y > y ? y : test.y;
+    				if(Math.abs(smallerX) > 1 && largerX %smallerX == 0 && largerX/smallerX > 0 && Math.abs(smallerY) > 1 && largerY % smallerY == 0 && largerY/smallerY > 0){
+        				continue;
+    					
+    				}
+    			}
+    			
+    			//if(i > 30000)
+    			//	return possiblePaths;
     			
     			// need to check if edge hit
     			
-    			//slopes.add(slope);
+    			
     			boolean hit = false;
-    			BigDecimal workingDistance = BigDecimal.ZERO;
+    			double workingDistance = 0;
     			// what is our tangent?
     			
     			// it will initially be defined by our first hit
-    			Point initialBeam = instance.new Point(new BigDecimal(x), new BigDecimal(y));
-    			if(initialBeam.isPointInTheLine(initialBeam, captain, badguy)){
-    				//System.out.println(String.format("Invalid: %d, %d", x, y));
-    				continue;
+    			Point initialBeam = new Point(x, y);
+    			if(initialBeam.x == 2 && initialBeam.y == 3){
+    				System.out.println("gumana");
     			}
-    			ray = instance.new Vector();
-    			ray.direction = initialBeam;
-    			ray.origin = captain;
+    			slopes.put(Double.valueOf(slope), initialBeam);
     			
+    			if(Point.isPointInTheLine(initialBeam, captain, badguy))
+    				continue;
+    			Vector ray = new Vector(captain, initialBeam);
     			
     			
     			// we already have the initial point of intersection
 				Point intersection = GetPointOfIntersection(ray, dimensions);
 				if(intersection == null)
-    				continue;
-					
-    				
-    			// while loop here, distance should always be greater
-    			// also, there should not be any hits
-    			while(workingDistance.compareTo(distanceBig) <= 0 && !hit )
+					continue;
+				
+    			while(workingDistance <= distance && !hit )
     			{
     				
-    				intersection = GetPointOfIntersection(ray, dimensions);
     				// hit a wall
-    				/*
-    				if(vectors.containsKey(ray)){
-    					intersection = vectors.get(ray);
-    				}
-    				else{
-    					intersection = GetPointOfIntersection(ray, dimensions);
-    					BigDecimal origX = ray.origin.x;
-    					BigDecimal origY = ray.origin.y;
-    					BigDecimal directX = ray.direction.x;
-    					BigDecimal directY = ray.direction.y;
-    					vectors.put(instance.new Vector(instance.new Point(origX, origY), instance.new Point(directX, directY)), intersection);
-    				}
-    				*/
-    				
+    				intersection = GetPointOfIntersection(ray, dimensions);
     				// predict the distance by computing the next intersection
-    				if(intersection == null){
-    					
+    				if(intersection == null)
     					break;
-    				}
-    					
-    				if(ray.origin.compareTo(captain) != 0 && captain.isPointInTheLine(captain, ray.origin, intersection))
-    				{
-    					break;
-    				}
     				
-    				
-    				if(badguy.isPointInTheLine(badguy, ray.origin, intersection)){
-    	   				workingDistance.add(Line.getLength(ray.origin, badguy));
+    				if(Point.isPointInTheLine(badguy, ray.origin, intersection)){
+    	   				workingDistance += Line.getLength(ray.origin, badguy);
     	   				hit = true;
-    	   				if(workingDistance.compareTo(distanceBig) <= 0){
-    	   					System.out.println(String.format("Vector that caused collision:destination: %d, %d", x, y));
-    		   				System.out.println("count = "  + possiblePaths++);
-    	   				}
+    	   				System.out.println("Hit! x = " + x + " y = " + y);
+    	   				if(workingDistance <=distance)
+    		   				possiblePaths++;
     				}
     				else{
     					if(IsEdgeHit(intersection)){
-    						// check the other tangent as well
+    						double tempDistance = Line.getLength(ray.origin, badguy);
+    						ray = ChangeDirection(ray, intersection, dimensions);
+    						intersection = GetPointOfIntersection(ray, dimensions);
+    						
+    						if(intersection == null)
+    							break;
+    						if(Point.isPointInTheLine(badguy, ray.origin, intersection)){
+    							System.out.println("Hit! x = " + x + " y = " + y);
+    	    	   				workingDistance += tempDistance;
+    	    	   				hit = true;
+    	    	   				if(workingDistance <=distance)
+    	    		   				possiblePaths++;
+    	    				}
         					break;
     						//
     					}
     					// Add total distance
-    					if(Line.getLength(ray.origin, intersection).doubleValue() < .1)
-    						break;
-    					workingDistance = workingDistance.add(Line.getLength(ray.origin, intersection));
+    					double testDistance = Line.getLength(ray.origin, intersection);
+    					if(testDistance < .1)
+    						workingDistance = distance;
+    	   				workingDistance += testDistance;
         				// change the ray direction
-        				ray = ray.ChangeDirection(ray, intersection, dimensions);
+        				ray = ChangeDirection(ray, intersection, dimensions);
     				}
-    				
-    				i++;
     				
     			}
     		}
@@ -208,67 +162,52 @@ public class GunFightRayTracer {
 	 * @author Johanne Demetria
 	 *
 	 */
-    public final class Point  implements Comparable<Point>{
-    	private BigDecimal x;
-    	private BigDecimal y;
+    static class Point{
+    	public double x;
+    	public double y;
     	
     	public Point(){
-    		this.x = BigDecimal.ZERO;
-    		this.y = BigDecimal.ZERO;
+    		this.x = 0;
+    		this.y = 0;
     	}
     	
-    	public Point(BigDecimal x, BigDecimal y){
+    	public Point(double x, double y){
     		this.x = x;
     		this.y = y;
     	}
     	
-    	public boolean isPointInTheLine(Point interest, Point origin, Point destination){
+    	public static boolean isPointInTheLine(Point interest, Point origin, Point destination){
+    	
     		boolean retVal = false;
-/*
-    		// just create the line
-    		BigDecimal y = (destination.y.subtract(origin.y));
-    		BigDecimal x = (destination.x.subtract(origin.x));
-    		if(x.compareTo(BigDecimal.ZERO)==0){
-    			// therefore, x should be equal to origin
-    			retVal = interest.x.compareTo(x) == 0;
-    		}
-    		else if (y.compareTo(BigDecimal.ZERO) == 0){
-    			retVal = interest.y.compareTo(y) == 0;
-    			// we have a horizontal line
+    		double dxInterest = interest.x - origin.x;
+    		double dyInterest = interest.y - origin.y;
+    		double dxLine = destination.x - origin.x;
+    		double dyLine = destination.y - origin.y;
+    		
+    		double longLength = Line.getLength(origin, destination);
+    		double shortcutLength = Line.getLength(origin, interest) + Line.getLength(interest, destination);
+    		
+    		// within +-.5
+    		retVal = ((longLength + .2 >= shortcutLength) && (longLength-.2 <= shortcutLength));
+    		
+    		//double cross = (dxInterest * dyLine )- (dyInterest * dxLine);
+    		
+    		//retVal = (Math.round(Math.abs(cross)*100.00) / 100.00) == 0 || Math.abs(cross) == 1;
+    		
+    		if(Math.abs(dxLine) >= Math.abs(dyLine)){
+    			retVal = retVal && (dxLine > 0 ? origin.x <= interest.x && interest.x <= destination.x :
+    				destination.x <= interest.x && interest.x <= origin.x);
+    			retVal = retVal && (dyLine > 0 ? origin.y <= interest.y && interest.y <= destination.y :
+    				destination.y <= interest.y && interest.y <= origin.y);
     		}
     		else{
-    			// test if the point is within the line
-    			BigDecimal slope = (y.divide(x, 10, RoundingMode.HALF_EVEN));
-    			BigDecimal yValue = slope.multiply((interest.x.subtract(origin.x))).add(origin.y);
-    			if(interest.y.compareTo(yValue) == 0)
-    				retVal = true;
-    		}
-    		*/
-    		BigDecimal dxInterest = interest.x.subtract(origin.x);
-    		BigDecimal dyInterest = interest.y.subtract(origin.y);
-    		BigDecimal dxLine = destination.x.subtract(origin.x);
-    		BigDecimal dyLine = destination.y.subtract(origin.y);
-    		BigDecimal cross = (dxInterest.multiply(dyLine )).subtract((dyInterest.multiply(dxLine)));
-    		
-    		cross = cross.setScale(10, RoundingMode.HALF_EVEN);
-    		retVal = cross.abs().compareTo(BigDecimal.ZERO) == 0;
-    		
-    		if(dxLine.abs().compareTo(dyLine.abs()) >= 0){
-    			retVal = retVal && (dxLine.compareTo(BigDecimal.ZERO) > 0 ? origin.x.compareTo(interest.x) <= 0 && interest.x.compareTo(destination.x) <= 0 :
-    				destination.x.compareTo(interest.x) <= 0 && interest.x.compareTo(origin.x) <= 0);
-    		}
-    		else{
-    			retVal = retVal && (dyLine.compareTo(BigDecimal.ZERO) > 0 ? origin.y.compareTo(interest.y) <= 0 && interest.y.compareTo(destination.y) <= 0 :
-    				destination.y.compareTo(interest.y) <= 0 && interest.y.compareTo(origin.y) <= 0);
+    			retVal = retVal && (dxLine > 0 ? origin.x <= interest.x && interest.x <= destination.x :
+    				destination.x <= interest.x && interest.x <= origin.x);
+    			retVal = retVal && (dyLine > 0 ? origin.y <= interest.y && interest.y <= destination.y :
+    				destination.y <= interest.y && interest.y <= origin.y);
     		}
     		return retVal;
     	}
-
-		@Override
-		public int compareTo(Point o) {
-			// TODO Auto-generated method stub
-			return (int)Math.abs((this.x.subtract(o.x).intValue()) + (this.y.subtract(o.y).intValue()));
-		}
     }
     
     static class Line{
@@ -276,21 +215,29 @@ public class GunFightRayTracer {
     	public Point end;
     	
     	public Line(Point origin, Point end){
-    		this.origin = origin;
-    		this.end = end;
+    		this.origin = new Point(origin.x, origin.y);
+    		this.end = new Point(end.x, end.y);
     	}
     	
-    	public BigDecimal getLength(){
-    		return BigDecimal.valueOf(Math.sqrt(((origin.x.subtract(end.x)).pow(2)).add((origin.y.subtract(end.y)).pow(2)).doubleValue()));
+    	public double getLength(){
+    		return Math.sqrt(Math.pow(origin.x - end.x, 2) + Math.pow(origin.y-end.y, 2));
     	}
     	
-    	public static BigDecimal getLength(Point o, Point e){
-    		return BigDecimal.valueOf(Math.sqrt(((o.x.subtract(e.x)).pow(2)).add((o.y.subtract(e.y)).pow(2)).doubleValue()));
+    	public static double getLength(Point o, Point e){
+    		return Math.sqrt(Math.pow(o.x - e.x, 2) + Math.pow(o.y-e.y, 2));
     		
     	}
     }
     
-    
+    static class Vector{
+    	public Point origin;
+    	public Point direction;
+    	
+    	public Vector(Point origin, Point direction){
+    		this.origin = new Point(origin.x, origin.y);
+    		this.direction = new Point(direction.x, direction.y);
+    	}
+    }
     
     /**
      * Checks whether a vector collides with a specified side
@@ -301,38 +248,36 @@ public class GunFightRayTracer {
     public static Point Intersect(Vector ray, Line side, int dimensions[]){
     	
     	// try a different approach
-    	Line referenceLine = new Line(ray.origin, instance.new Point(ray.direction.x, ray.direction.y));
+    	Line referenceLine = new Line(ray.origin, new Point(ray.direction.x, ray.direction.y));
     	
     	// try the algo first
-    	BigDecimal a1, a2, b1, b2, c1, c2;
-    	BigDecimal det = BigDecimal.ZERO;
-    	a1 = referenceLine.end.y.subtract(referenceLine.origin.y);
-	    b1 = referenceLine.origin.x.subtract(referenceLine.end.x);
-	    c1 = (a1.multiply(referenceLine.origin.x)).add((b1.multiply(referenceLine.origin.y)));
+    	double a1, a2, b1, b2, c1, c2;
+    	double det = 0;
+    	a1 = referenceLine.end.y - referenceLine.origin.y;
+	    b1 = referenceLine.origin.x - referenceLine.end.x;
+	    c1 = a1 * referenceLine.origin.x + b1 * referenceLine.origin.y;
 
-    	a2 = side.end.y.subtract(side.origin.y);
-	    b2 = side.origin.x.subtract(side.end.x);
-	    c2 = (a2.multiply(side.origin.x)).add((b2.multiply(side.origin.y)));
+    	a2 = side.end.y - side.origin.y;
+	    b2 = side.origin.x - side.end.x;
+	    c2 = a2 * side.origin.x + b2 * side.origin.y;
 
-	    det = (a1.multiply(b2)).subtract((a2.multiply(b1)));
-	    if(det.compareTo(BigDecimal.ZERO) == 0){
+	    det = a1 * b2 - a2 * b1;
+//	    det = Math.round(10.00*(a1 * b2 - a2 * b1))/10.00;
+	    if(det == 0){
 	    	return null;
 	    }
 	    else{
 	    	// NEED TO CHECK IF POINT IS IN RAY LINE
-	    	BigDecimal roundedX = ((b2.multiply(c1)).subtract((b1.multiply(c2)))).divide(det, 10, RoundingMode.HALF_UP);
-	    	 BigDecimal roundedY = ((a1.multiply(c2)).subtract((a2.multiply(c1)))).divide(det, 10, RoundingMode.HALF_UP);
-	    	//BigDecimal roundedX = Math.round((((b2*c1) - (b1*c2))/det) * 10000.00)/10000.00;
-	    	//BigDecimal roundedY = Math.round((((a1*c2)-(a2*c1))/det) * 10000.00)/10000.00;
+	    	 double roundedX = (((b2*c1) - (b1*c2))/det);
+	    	 double roundedY = (((a1*c2)-(a2*c1))/det);
+	    	//double roundedX = Math.round((((b2*c1) - (b1*c2))/det) * 10000.00)/10000.00;
+	    	//double roundedY = Math.round((((a1*c2)-(a2*c1))/det) * 10000.00)/10000.00;
 	    	
-	    	if(roundedX.compareTo(BigDecimal.ZERO) < 0 || roundedY.compareTo(BigDecimal.ZERO) < 0 )//|| roundedX > dimensions[0] || roundedY > dimensions[1])
-	    	{
-	    		
+	    	if(roundedX < 0 || roundedY < 0 || roundedX > dimensions[0] || roundedY > dimensions[1])
 	    		return null;
-	    	}
-		    Point retVal = instance.new Point(roundedX, roundedY);
+		    Point retVal = new Point(roundedX, roundedY);
 		    // CHECK THAT THE RETVAL IS WITHIN BOUNDS
-		    if(retVal.isPointInTheLine(retVal, ray.origin, ray.direction))
+		    if(Point.isPointInTheLine(retVal, ray.origin, ray.direction))
 	    		return retVal;
 	    	return null;
 	    }
@@ -349,21 +294,21 @@ public class GunFightRayTracer {
     	// y = mx+b
     	
     	// create a new line from the vector, intersect the two lines
-    	Line referenceLine = new Line(ray.origin, instance.new Point(ray.direction.x * 1000, ray.direction.y * 1000));
+    	Line referenceLine = new Line(ray.origin, new Point(ray.direction.x*1000, ray.direction.y*1000));
     	
     	// try the algo first
-    	BigDecimal a1, a2, b1, b2, c1, c2;
-    	BigDecimal r1, r2, r3, r4;
-    	BigDecimal denom, offset, num;
+    	double a1, a2, b1, b2, c1, c2;
+    	double r1, r2, r3, r4;
+    	double denom, offset, num;
     	
     	a1 = referenceLine.end.y - referenceLine.origin.y;
 	    b1 = referenceLine.origin.x - referenceLine.end.x;
-	    c1 = (referenceLine.end.x * referenceLine.origin.y) - (referenceLine.origin.x * referenceLine.end.y);
+	    c1 = referenceLine.end.x * referenceLine.origin.y - referenceLine.origin.x * referenceLine.end.y;
 	    
 	    
 	    
-	    r3 = (a1 * side.origin.x) + (b1 * side.origin.y) + c1;
-	    r4 = (a1 * side.end.x) + (b1 * side.end.y) + c1;
+	    r3 = a1 * side.origin.x + b1 * side.origin.y + c1;
+	    r4 = a1 * side.end.x + b1 * side.end.y + c1;
 	    
 	    if(r3 != 0 && r4 !=0 && ((r3 > 0 && r4 > 0) || (r3 < 0 && r4<0)))
 	    		return retVal;
@@ -371,15 +316,15 @@ public class GunFightRayTracer {
 	    // do the same with a2, b2, c2
     	a2 = side.end.y - side.origin.y;
 	    b2 = side.origin.x - side.end.x;
-	    c2 = (side.end.x * side.origin.y) - (side.origin.x * side.end.y);
+	    c2 = side.end.x * side.origin.y - side.origin.x * side.end.y;
 	    
-	    r1 = (a2 * referenceLine.origin.x) + (b2 * referenceLine.origin.y) + c2;
+	    r1 = a2 * referenceLine.origin.x + b2 * referenceLine.origin.y + c2;
 	    r2 = a2 * referenceLine.end.x + b2 * referenceLine.end.y + c2;
 	    
 	    if(r1 != 0 && r2 !=0 && ((r1 > 0 && r2 > 0) || (r1 < 0 && r2<0)))
     		return retVal;
 	    
-	    denom = (a1 * b2) - (a2 * b1);
+	    denom = a1 * b2 - a2 * b1;
 	    
     	// lies on the same line
 	    if(denom == 0)
@@ -388,7 +333,7 @@ public class GunFightRayTracer {
 	    offset = denom < 0 ? - denom /2 : denom / 2;
     	
     	
-    	retVal = instance.new Point();
+    	retVal = new Point();
     	num = b1 * c2 - b2 * c1;
         retVal.x= ( num < 0 ? num - offset : num + offset ) / denom;
         
@@ -397,14 +342,27 @@ public class GunFightRayTracer {
         retVal.y = ( num < 0 ? num - offset : num + offset ) / denom;
         
         // the point should be inside the origin and the destination
-        if(retVal.isPointInTheLine(retVal, ray.origin, ray.direction))
+        if(Point.isPointInTheLine(retVal, ray.origin, ray.direction))
         	return retVal;
         
         return null;
         */
     }
     
-    
+    public static Vector ChangeDirection(Vector ray, Point intersection, int[] dimensions){
+    	// intersected left or right wall
+    	if(intersection.x == 0 || intersection.x == dimensions[0]){
+    		ray.direction.x *= -1;
+    		
+    	}
+    	if(intersection.y == 0 || intersection.y == dimensions[1]){
+    		ray.direction.y *= -1;
+    		
+    	}
+    	
+    	ray.origin = intersection;
+    	return ray;
+    }
     
     /**
      * Checks the point of intersection of a Vector and a bounding rectangle
@@ -421,11 +379,11 @@ public class GunFightRayTracer {
     	Line bottom = new Line(bottomLeftCorner, bottomRightCorner);
     	Line left = new Line(bottomLeftCorner, topLeftCorner);
     	Line right = new Line(bottomRightCorner, topRightCorner);
-    	Line[] sides = {top, bottom, left, right};
+    	Line[] sides = {left, right, top, bottom};
 
     	for(int i = 0; i <4 && retVal == null; i++){
     		// do not intersect if on the same side
-    		if(!ray.origin.isPointInTheLine(ray.origin, sides[i].origin, sides[i].end))
+    		if(!Point.isPointInTheLine(ray.origin, sides[i].origin, sides[i].end))
     		retVal = Intersect(ray, sides[i], dimensions);
     	}
     	
@@ -433,8 +391,8 @@ public class GunFightRayTracer {
     }
     
     public static boolean IsOnSameSide(Line reference, Point originPoint){
-    	return (reference.origin.x.compareTo(originPoint.x) <=0 && originPoint.x.compareTo(reference.end.x) <=0) ||
-    			(reference.origin.y.compareTo(originPoint.y) <= 0 && originPoint.y.compareTo(reference.end.y) <= 0);
+    	return (reference.origin.x <= originPoint.x && originPoint.x <=reference.end.x) ||
+    			(reference.origin.y <= originPoint.y && originPoint.y <=reference.end.y);
     			
     }
     
@@ -445,4 +403,5 @@ public class GunFightRayTracer {
     			(intersection.x == bottomRightCorner.x && intersection.y == bottomRightCorner.y);
     			
     }
-}
+    	
+    }
