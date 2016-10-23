@@ -1,5 +1,7 @@
 package com.google.challenges;
 
+import java.util.Timer;
+
 public class Main {
 
 	static String[][] inputs ={
@@ -17,11 +19,11 @@ public class Main {
 		{"3", "10"},
 		
 		{"3", "7"}};
-	static int test_cases = 2;
-	static int dimensions[][] = {{3,2}, {300, 275}};
-	static int captain_position[][] = {{1,1}, {150,150}};
-	static int badguy_position[][] = {{2,1}, {185, 100}};
-	static int distance[] = {4, 500};
+	static int test_cases = 3;
+	static int dimensions[][] = {{3,2}, {300, 275}, {1000, 1000}};
+	static int captain_position[][] = {{1,1}, {150,150}, {500,500}};
+	static int badguy_position[][] = {{2,1}, {185, 100}, {185, 100}};
+	static int distance[] = {4, 500, 10000};
 	
 	public static void main(String[] args){
 		int i = 1;
@@ -32,7 +34,18 @@ public class Main {
 			System.out.println(String.format("captain_position = [%d, %d]", captain_position[i][0], captain_position[i][1]));
 			System.out.println(String.format("badguy_position = [%d, %d]", badguy_position[i][0], badguy_position[i][1]));
 			System.out.println(String.format("distance = %d", distance[i]));
-			System.out.println(String.format("answer = %d\n", GunFightRayTracer.answer(dimensions[i], captain_position[i], badguy_position[i], distance[i])));
+			
+			long millis = System.currentTimeMillis();
+			int answer1 = Answer.answer(dimensions[i], captain_position[i], badguy_position[i], distance[i]);
+			long endMillis = System.currentTimeMillis() - millis;
+
+			System.out.println(String.format("answer = %d - execution time = %d\n", answer1, endMillis));
+			/*
+			millis = System.currentTimeMillis();
+			int answer2 = TreeSolution.answer(dimensions[i], captain_position[i], badguy_position[i], distance[i]);
+			endMillis = System.currentTimeMillis() - millis;
+			System.out.println(String.format("answer = %d - exectime = %d\n", answer2, endMillis));
+			*/
 		}
 		/*
 		for(String[] input : inputs){
